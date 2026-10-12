@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated, Easing, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 import { addXP, addCoins } from '../storage';
+
+const mascot = require('../../assets/custom/mascot.png');
+const bubbles = require('../../assets/custom/bubbles.png');
 
 type Phase = 'idle' | 'in' | 'hold' | 'out';
 
@@ -48,7 +51,7 @@ export default function PanicScreen() {
 
         {phase === 'idle' ? (
           <Pressable style={styles.panicButton} onPress={() => { setCycles(0); setPhase('in'); }}>
-            <Text style={styles.panicEmoji}>🫧</Text>
+            <Image source={mascot} style={styles.panicMascot} />
             <Text style={styles.panicText}>I'M HAVING A CRAVING</Text>
           </Pressable>
         ) : done ? (
@@ -62,7 +65,9 @@ export default function PanicScreen() {
           </View>
         ) : (
           <View style={styles.breathArea}>
-            <Animated.View style={[styles.breathCircle, { transform: [{ scale }] }]} />
+            <Animated.View style={[styles.breathCircle, { transform: [{ scale }] }]}>
+              <Image source={bubbles} style={styles.breathImage} resizeMode="cover" />
+            </Animated.View>
             <Text style={styles.phaseText}>{label}</Text>
             <Text style={styles.cycleText}>Cycle {cycles + 1} / 3</Text>
           </View>
@@ -83,12 +88,14 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 },
   },
   panicEmoji: { fontSize: 48 },
+  panicMascot: { width: 72, height: 72, borderRadius: 36 },
   panicText: { color: theme.textLight, fontWeight: '900', fontSize: 18, marginTop: 8 },
   breathArea: { alignItems: 'center', height: 320, justifyContent: 'center' },
   breathCircle: {
-    width: 160, height: 160, borderRadius: 80,
+    width: 160, height: 160, borderRadius: 80, overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.5)', borderWidth: 2, borderColor: 'rgba(255,255,255,0.8)',
   },
+  breathImage: { width: '100%', height: '100%', opacity: 0.85 },
   phaseText: { color: theme.textLight, fontSize: 24, fontWeight: '700', marginTop: 32 },
   cycleText: { color: 'rgba(255,255,255,0.8)', marginTop: 8 },
   doneCard: {

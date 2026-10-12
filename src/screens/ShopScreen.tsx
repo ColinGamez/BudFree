@@ -1,11 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
 import { THEMES, ThemeDef } from '../themes';
 import { getCoins, getOwnedThemes, getEquippedTheme, buyTheme, equipTheme } from '../storage';
 import { useAppTheme } from '../ThemeContext';
+
+const coinImg = require('../../assets/custom/coin.png');
 
 export default function ShopScreen() {
   const [coins, setCoins] = useState(0);
@@ -51,7 +53,8 @@ export default function ShopScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>🛍️ Reward Shop</Text>
         <View style={styles.coinPill}>
-          <Text style={styles.coinText}>🪙 {coins} coins</Text>
+          <Image source={coinImg} style={styles.coinImg} />
+          <Text style={styles.coinText}>{coins} coins</Text>
         </View>
 
         {THEMES.map((item) => {
@@ -59,16 +62,14 @@ export default function ShopScreen() {
           const isEquipped = equipped === item.id;
           return (
             <Pressable key={item.id} style={styles.card} onPress={() => onPressItem(item)}>
-              <LinearGradient colors={item.gradient} style={styles.preview}>
-                <Text style={styles.previewEmoji}>{item.emoji}</Text>
-              </LinearGradient>
+              <LinearGradient colors={item.gradient} style={styles.preview} />
               <View style={styles.cardBody}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemDesc}>{item.desc}</Text>
               </View>
               <View style={[styles.pricePill, isEquipped && styles.equippedPill]}>
                 <Text style={styles.priceText}>
-                  {isEquipped ? '✓ Equipped' : isOwned ? 'Equip' : `🪙 ${item.price}`}
+                  {isEquipped ? '✓ Equipped' : isOwned ? 'Equip' : `${item.price} coins`}
                 </Text>
               </View>
             </Pressable>
@@ -86,10 +87,12 @@ const styles = StyleSheet.create({
   container: { padding: 20, paddingTop: 60 },
   title: { fontSize: 28, fontWeight: '800', color: theme.textLight, textAlign: 'center' },
   coinPill: {
-    alignSelf: 'center', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 20,
+    alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 20,
     paddingVertical: 8, paddingHorizontal: 20, marginTop: 12, marginBottom: 20,
     borderWidth: 1, borderColor: theme.glassBorder,
   },
+  coinImg: { width: 24, height: 24 },
   coinText: { color: theme.textLight, fontWeight: '800', fontSize: 16 },
   card: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: theme.glass,

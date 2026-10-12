@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
 import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile, checkIn, getStreak, getFreezes, hasCheckedInToday } from '../storage';
 import { useAppTheme } from '../ThemeContext';
+
+const mascot = require('../../assets/custom/mascot.png');
+const coinImg = require('../../assets/custom/coin.png');
 
 function pad(n: number) {
   return n.toString().padStart(2, '0');
@@ -63,7 +66,7 @@ export default function HomeScreen() {
   return (
     <LinearGradient colors={themeDef.gradient} style={styles.bg}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.bubble}>🫧</Text>
+        <Image source={mascot} style={styles.mascot} />
         <Text style={styles.heading}>Weed-free for</Text>
 
         <View style={styles.timerCard}>
@@ -82,7 +85,7 @@ export default function HomeScreen() {
             <Text style={styles.statLabel}>saved</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>🪙</Text>
+            <Image source={coinImg} style={styles.statImg} />
             <Text style={styles.statValue}>{coins}</Text>
             <Text style={styles.statLabel}>coins</Text>
           </View>
@@ -136,6 +139,8 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { alignItems: 'center', padding: 20, paddingTop: 60 },
   bubble: { fontSize: 40, marginBottom: 4 },
+  mascot: { width: 88, height: 88, borderRadius: 44, marginBottom: 8, borderWidth: 2, borderColor: theme.glassHighlight },
+  statImg: { width: 30, height: 30 },
   heading: { color: theme.textLight, fontSize: 22, fontWeight: '700', marginBottom: 16, textShadowColor: 'rgba(0,60,90,0.35)', textShadowRadius: 6 },
   timerCard: {
     width: '100%', backgroundColor: theme.glass, borderRadius: 28, padding: 24,
