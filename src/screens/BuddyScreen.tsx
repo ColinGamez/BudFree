@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import {
   getCravings, levelForXP, BuddyProfile,
 } from '../storage';
 import { buddyGreeting, buddyReply, BuddyStats } from '../buddy';
+import { askGroq, getAIKey, setAIKey, clearAIKey, ChatMsg } from '../ai';
 import { useAppTheme } from '../ThemeContext';
 
 const mascot = require('../../assets/custom/mascot.png');
@@ -38,6 +39,10 @@ export default function BuddyScreen() {
   const [stats, setStats] = useState<BuddyStats | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
+  const [aiOn, setAiOn] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const [keyModal, setKeyModal] = useState(false);
+  const [keyInput, setKeyInput] = useState('');
   const scroll = useRef<ScrollView>(null);
 
   // setup form state
@@ -62,9 +67,10 @@ export default function BuddyScreen() {
   useFocusEffect(
     useCallback(() => {
       (async () => {
-        const [bp, s] = await Promise.all([getBuddyProfile(), loadStats()]);
+        const [bp, s, key] = await Promise.all([getBuddyProfile(), loadStats(), getAIKey()]);
         setProfile(bp);
         setStats(s);
+        setAiOn(!!key);
         if (bp) {
           setMsgs((m) => (m.length === 0 ? [{ id: Date.now(), from: 'buddy', text: buddyGreeting(bp, s) }] : m));
         }
@@ -89,17 +95,41 @@ export default function BuddyScreen() {
     ]);
   };
 
-  const send = () => {
+  const send = async () => {
     const text = input.trim();
     if (!text || !stats) return;
     setInput('');
-    const reply = buddyReply(text, profile, stats);
-    setMsgs((m) => [
-      ...m,
-      { id: Date.now(), from: 'me', text },
-      { id: Date.now() + 1, from: 'buddy', text: reply },
-    ]);
+    const meMsg: Msg = { id: Date.now(), from: 'me', text };
+    setMsgs((m) => [...m, meMsg]);
     setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 100);
+
+    let reply: string | null = null;
+    if (aiOn) {
+      setThinking(true);
+      const history: ChatMsg[] = [...msgs, meMsg].map((m) => ({
+        role: m.from === 'me' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+      reply = await askGroq(history, profile, stats);
+      setThinking(false);
+    }
+    if (!reply) reply = buddyReply(text, profile, stats); // offline fallback
+
+    setMsgs((m) => [...m, { id: Date.now() + 1, from: 'buddy', text: reply! }]);
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 100);
+  };
+
+  const saveKey = async () => {
+    const k = keyInput.trim();
+    if (k) {
+      await setAIKey(k);
+      setAiOn(true);
+    } else {
+      await clearAIKey();
+      setAiOn(false);
+    }
+    setKeyInput('');
+    setKeyModal(false);
   };
 
   if (!profile) {
@@ -162,10 +192,13 @@ export default function BuddyScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.header}>
           <Image source={mascot} style={styles.headerMascot} />
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.headerName}>Bud</Text>
-            <Text style={styles.headerSub}>your quit buddy · always here</Text>
+            <Text style={styles.headerSub}>{aiOn ? '⚡ AI online (Groq)' : 'offline mode'} · always here</Text>
           </View>
+          <Pressable style={styles.keyBtn} onPress={() => setKeyModal(true)}>
+            <Text style={styles.keyBtnText}>{aiOn ? '🔑' : '⚙️'}</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -182,6 +215,15 @@ export default function BuddyScreen() {
               </View>
             </View>
           ))}
+          {thinking && (
+            <View style={styles.msgRow}>
+              <Image source={mascot} style={styles.msgAvatar} />
+              <View style={[styles.bubble, styles.bubbleBuddy, { flexDirection: 'row', gap: 8, alignItems: 'center' }]}>
+                <ActivityIndicator color={theme.deepGreen} size="small" />
+                <Text style={styles.bubbleText}>Bud is thinking…</Text>
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         <View style={styles.inputBar}>
@@ -197,6 +239,32 @@ export default function BuddyScreen() {
             <Text style={styles.sendText}>➤</Text>
           </Pressable>
         </View>
+
+        <Modal visible={keyModal} transparent animationType="fade">
+          <View style={styles.modalBg}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>⚡ Upgrade Bud to AI</Text>
+              <Text style={styles.modalText}>
+                Get a free API key at console.groq.com (takes 1 minute, no card needed). Paste it here and Bud replies with real AI. Leave empty to stay offline.
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={keyInput}
+                onChangeText={setKeyInput}
+                placeholder="gsk_…"
+                placeholderTextColor="rgba(13,59,76,0.4)"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Pressable style={styles.submit} onPress={saveKey}>
+                <Text style={styles.submitText}>{keyInput.trim() ? 'Enable AI' : 'Stay offline'}</Text>
+              </Pressable>
+              <Pressable onPress={() => setKeyModal(false)} style={{ marginTop: 10 }}>
+                <Text style={{ color: theme.textDark, textAlign: 'center' }}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
@@ -253,4 +321,13 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   sendText: { fontSize: 18, color: theme.textDark, fontWeight: '900' },
+  keyBtn: {
+    width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.glassBorder,
+  },
+  keyBtnText: { fontSize: 18 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,30,45,0.6)', justifyContent: 'center', padding: 24 },
+  modalCard: { backgroundColor: '#fff', borderRadius: 24, padding: 22 },
+  modalTitle: { fontSize: 20, fontWeight: '900', color: theme.textDark },
+  modalText: { color: theme.textDark, marginTop: 8, marginBottom: 14, lineHeight: 20 },
 });
