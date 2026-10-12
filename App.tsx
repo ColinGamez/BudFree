@@ -13,6 +13,8 @@ import PanicScreen from './src/screens/PanicScreen';
 import ShopScreen from './src/screens/ShopScreen';
 import CravingsScreen from './src/screens/CravingsScreen';
 import StatsScreen from './src/screens/StatsScreen';
+import BuddyScreen from './src/screens/BuddyScreen';
+import { setupNotifications } from './src/notifications';
 import { ThemeProvider } from './src/ThemeContext';
 
 const Tab = createBottomTabNavigator();
@@ -34,6 +36,7 @@ export default function App() {
     const p = await getProfile();
     setHasProfile(!!p);
     setLoading(false);
+    if (p) setupNotifications();
   };
 
   useEffect(() => {
@@ -97,6 +100,11 @@ export default function App() {
               name="Stats"
               component={StatsScreen}
               options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📊" focused={focused} /> }}
+            />
+            <Tab.Screen
+              name="Bud"
+              component={BuddyScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌱" focused={focused} /> }}
             />
             <Tab.Screen
               name="Shop"

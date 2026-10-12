@@ -11,6 +11,8 @@ const KEYS = {
   lastCheckIn: 'budfree.lastCheckIn',
   streak: 'budfree.streak',
   freezes: 'budfree.freezes',
+  buddy: 'budfree.buddy',
+  notified: 'budfree.notified',
 };
 
 export type Profile = {
@@ -183,4 +185,37 @@ export async function checkIn(): Promise<CheckInResult> {
   await addXP(xpEarned);
 
   return { already: false, streak: nextStreak, coinsEarned, xpEarned, freezeEarned };
+}
+
+// ---- Buddy profile ----
+
+export type BuddyProfile = {
+  userName: string;
+  quitReason: string;   // e.g. "health", "money", "mind", "family"
+  goalDays: number;     // personal goal
+  mainTrigger: string;  // e.g. "stress", "boredom", "sleep", "social"
+};
+
+export async function getBuddyProfile(): Promise<BuddyProfile | null> {
+  const raw = await AsyncStorage.getItem(KEYS.buddy);
+  return raw ? (JSON.parse(raw) as BuddyProfile) : null;
+}
+
+export async function saveBuddyProfile(p: BuddyProfile) {
+  await AsyncStorage.setItem(KEYS.buddy, JSON.stringify(p));
+}
+
+// ---- Milestone notifications ----
+
+export async function getNotifiedMilestones(): Promise<string[]> {
+  const raw = await AsyncStorage.getItem(KEYS.notified);
+  return raw ? (JSON.parse(raw) as string[]) : [];
+}
+
+export async function markMilestoneNotified(id: string) {
+  const list = await getNotifiedMilestones();
+  if (!list.includes(id)) {
+    list.push(id);
+    await AsyncStorage.setItem(KEYS.notified, JSON.stringify(list));
+  }
 }

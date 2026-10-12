@@ -3,7 +3,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Image } from 'rea
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
-import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile, checkIn, getStreak, getFreezes, hasCheckedInToday } from '../storage';
+import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile, checkIn, getStreak, getFreezes, hasCheckedInToday, getNotifiedMilestones, markMilestoneNotified } from '../storage';
+import { notifyMilestone } from '../notifications';
+
+const DAY_MILESTONES = [1, 3, 7, 14, 30, 90, 180, 365];
 import { useAppTheme } from '../ThemeContext';
 
 const mascot = require('../../assets/custom/mascot.png');
@@ -30,7 +33,19 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      getProfile().then(setProfile);
+      getProfile().then(async (p) => {
+        setProfile(p);
+        if (!p) return;
+        const days = Math.floor((Date.now() - new Date(p.quitDate).getTime()) / 86400000);
+        const notified = await getNotifiedMilestones();
+        for (const m of DAY_MILESTONES) {
+          const id = `day-${m}`;
+          if (days >= m && !notified.includes(id)) {
+            await markMilestoneNotified(id);
+            notifyMilestone(`🏅 ${m} day${m === 1 ? '' : 's'} clean!`, 'New badge unlocked in BudFree. Come see it shine.');
+          }
+        }
+      });
       getXP().then(setXP);
       getCoins().then(setCoins);
       getStreak().then(setStreak);
