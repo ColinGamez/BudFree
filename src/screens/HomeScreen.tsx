@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
-import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile } from '../storage';
+import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile, checkIn, getStreak, getFreezes, hasCheckedInToday } from '../storage';
 import { useAppTheme } from '../ThemeContext';
 
 function pad(n: number) {
@@ -16,6 +16,9 @@ export default function HomeScreen() {
   const [xp, setXP] = useState(0);
   const [coins, setCoins] = useState(0);
   const { themeDef } = useAppTheme();
+  const [checkedToday, setCheckedToday] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [freezes, setFreezes] = useState(0);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -27,8 +30,25 @@ export default function HomeScreen() {
       getProfile().then(setProfile);
       getXP().then(setXP);
       getCoins().then(setCoins);
+      getStreak().then(setStreak);
+      getFreezes().then(setFreezes);
+      hasCheckedInToday().then(setCheckedToday);
     }, [])
   );
+
+  const onCheckIn = async () => {
+    const result = await checkIn();
+    if (result.already) return;
+    setStreak(result.streak);
+    setCheckedToday(true);
+    setXP(await getXP());
+    setCoins(await getCoins());
+    setFreezes(await getFreezes());
+    Alert.alert(
+      `Day ${result.streak} check-in! 🔥`,
+      `+${result.xpEarned} XP · +${result.coinsEarned} coins${result.freezeEarned ? '\n🧊 Bonus freeze card earned!' : ''}`
+    );
+  };
 
   if (!profile) return null;
 
@@ -80,6 +100,23 @@ export default function HomeScreen() {
           <Text style={styles.xpText}>{intoLevel} / {needed} XP</Text>
         </View>
 
+        <Pressable
+          style={[styles.checkInCard, checkedToday && styles.checkInDone]}
+          onPress={onCheckIn}
+          disabled={checkedToday}
+        >
+          <Text style={styles.checkInEmoji}>{checkedToday ? '✅' : '☀️'}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.checkInTitle}>
+              {checkedToday ? 'Checked in today!' : 'Daily check-in'}
+            </Text>
+            <Text style={styles.checkInSub}>
+              🔥 {streak} day streak · 🧊 {freezes} freeze card{freezes === 1 ? '' : 's'}
+            </Text>
+          </View>
+          {!checkedToday && <Text style={styles.checkInTap}>TAP</Text>}
+        </Pressable>
+
         <Text style={styles.quote}>"Every day clean is a day your brain heals." 🌤️</Text>
       </ScrollView>
     </LinearGradient>
@@ -124,5 +161,18 @@ const styles = StyleSheet.create({
   xpBarBg: { height: 14, borderRadius: 7, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
   xpBarFill: { height: '100%', borderRadius: 7 },
   xpText: { color: 'rgba(255,255,255,0.9)', fontSize: 12, marginTop: 6, textAlign: 'right' },
+  checkInCard: {
+    width: '100%', flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: theme.glass, borderRadius: 20, padding: 16, marginTop: 16,
+    borderWidth: 1, borderColor: theme.glassBorder,
+  },
+  checkInDone: { opacity: 0.7 },
+  checkInEmoji: { fontSize: 32 },
+  checkInTitle: { color: theme.textLight, fontWeight: '800', fontSize: 16 },
+  checkInSub: { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
+  checkInTap: {
+    color: theme.textDark, fontWeight: '900', fontSize: 13, backgroundColor: theme.sunshine,
+    borderRadius: 14, paddingVertical: 6, paddingHorizontal: 14, overflow: 'hidden',
+  },
   quote: { color: 'rgba(255,255,255,0.9)', marginTop: 28, fontStyle: 'italic', textAlign: 'center' },
 });

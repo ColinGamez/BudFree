@@ -8,6 +8,9 @@ const KEYS = {
   cravings: 'budfree.cravings',
   ownedThemes: 'budfree.ownedThemes',
   equippedTheme: 'budfree.equippedTheme',
+  lastCheckIn: 'budfree.lastCheckIn',
+  streak: 'budfree.streak',
+  freezes: 'budfree.freezes',
 };
 
 export type Profile = {
@@ -99,4 +102,63 @@ export async function buyTheme(id: string, price: number): Promise<boolean> {
   }
   await addCoins(-price);
   return true;
+}
+
+// ---- Daily check-in & streaks ----
+
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+export async function getStreak(): Promise<number> {
+  return Number((await AsyncStorage.getItem(KEYS.streak)) ?? 0);
+}
+
+export async function getFreezes(): Promise<number> {
+  return Number((await AsyncStorage.getItem(KEYS.freezes)) ?? 0);
+}
+
+export async function hasCheckedInToday(): Promise<boolean> {
+  return (await AsyncStorage.getItem(KEYS.lastCheckIn)) === dayKey(new Date());
+}
+
+export type CheckInResult =
+  | { already: true; streak: number }
+  | { already: false; streak: number; coinsEarned: number; xpEarned: number; freezeEarned: boolean };
+
+export async function checkIn(): Promise<CheckInResult> {
+  const today = dayKey(new Date());
+  const last = await AsyncStorage.getItem(KEYS.lastCheckIn);
+  const streak = await getStreak();
+  if (last === today) return { already: true, streak };
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  // Streak survives one missed day if a freeze card is available
+  let nextStreak: number;
+  let freezes = await getFreezes();
+  if (last === dayKey(yesterday)) {
+    nextStreak = streak + 1;
+  } else if (last && freezes > 0) {
+    freezes -= 1;
+    await AsyncStorage.setItem(KEYS.freezes, String(freezes));
+    nextStreak = streak + 1;
+  } else {
+    nextStreak = 1;
+  }
+
+  const coinsEarned = Math.min(5 + nextStreak * 2, 25); // caps at 25/day
+  const xpEarned = 10 + nextStreak * 2;
+  // Every full 7-day week of streaking earns a freeze card 🧊
+  const freezeEarned = nextStreak % 7 === 0;
+  if (freezeEarned) {
+    await AsyncStorage.setItem(KEYS.freezes, String(freezes + 1));
+  }
+
+  await AsyncStorage.setItem(KEYS.lastCheckIn, today);
+  await AsyncStorage.setItem(KEYS.streak, String(nextStreak));
+  await addCoins(coinsEarned);
+  await addXP(xpEarned);
+
+  return { already: false, streak: nextStreak, coinsEarned, xpEarned, freezeEarned };
 }

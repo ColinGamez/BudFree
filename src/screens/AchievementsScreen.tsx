@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
-import { getProfile } from '../storage';
+import { getProfile, getStreak } from '../storage';
 import { useAppTheme } from '../ThemeContext';
 
 type Achievement = {
@@ -15,12 +15,14 @@ type Achievement = {
 
 export default function AchievementsScreen() {
   const [days, setDays] = useState(0);
+  const [streak, setStreak] = useState(0);
   const { themeDef } = useAppTheme();
 
   useEffect(() => {
     getProfile().then((p) => {
       if (p) setDays((Date.now() - new Date(p.quitDate).getTime()) / 86400000);
     });
+    getStreak().then(setStreak);
   }, []);
 
   const achievements: Achievement[] = [
@@ -32,6 +34,10 @@ export default function AchievementsScreen() {
     { id: 'month-1', emoji: '🌳', name: 'Monthly Milestone', desc: '30 days clean', unlocked: days >= 30 },
     { id: 'day-90', emoji: '🏆', name: 'Brain Reboot', desc: '90 days clean', unlocked: days >= 90 },
     { id: 'year-1', emoji: '👑', name: 'Legendary', desc: '1 year clean', unlocked: days >= 365 },
+    { id: 'streak-3', emoji: '🔥', name: 'Heating Up', desc: '3-day check-in streak', unlocked: streak >= 3 },
+    { id: 'streak-7', emoji: '☀️', name: 'Habit Former', desc: '7-day check-in streak', unlocked: streak >= 7 },
+    { id: 'streak-30', emoji: '⚡', name: 'Unstoppable', desc: '30-day check-in streak', unlocked: streak >= 30 },
+    { id: 'streak-100', emoji: '💎', name: 'Diamond Discipline', desc: '100-day check-in streak', unlocked: streak >= 100 },
   ];
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
