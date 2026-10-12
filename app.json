@@ -19,6 +19,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b326a4c3-9339-42ae-bbce-faec67ed022b"
+      }
+    },
+    "owner": "budfree"
   }
 }
