@@ -11,6 +11,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
 import PanicScreen from './src/screens/PanicScreen';
 import ShopScreen from './src/screens/ShopScreen';
+import CravingsScreen from './src/screens/CravingsScreen';
 import { ThemeProvider } from './src/ThemeContext';
 
 const Tab = createBottomTabNavigator();
@@ -85,6 +86,11 @@ export default function App() {
               name="Badges"
               component={AchievementsScreen}
               options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏅" focused={focused} /> }}
+            />
+            <Tab.Screen
+              name="Log"
+              component={CravingsScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🌊" focused={focused} /> }}
             />
             <Tab.Screen
               name="Shop"

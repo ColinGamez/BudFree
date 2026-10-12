@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Animated, Easing, Image } from 'reac
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 import { addXP, addCoins } from '../storage';
+import { useNavigation } from '@react-navigation/native';
 
 const mascot = require('../../assets/custom/mascot.png');
 const bubbles = require('../../assets/custom/bubbles.png');
@@ -14,6 +15,7 @@ export default function PanicScreen() {
   const [cycles, setCycles] = useState(0);
   const scale = useRef(new Animated.Value(1)).current;
   const done = cycles >= 3;
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     if (phase === 'idle' || done) return;
@@ -59,7 +61,10 @@ export default function PanicScreen() {
             <Text style={styles.doneEmoji}>🎉</Text>
             <Text style={styles.doneTitle}>Craving beaten!</Text>
             <Text style={styles.doneSub}>+25 XP · +10 coins</Text>
-            <Pressable style={styles.again} onPress={() => { setCycles(0); setPhase('in'); }}>
+            <Pressable style={styles.again} onPress={() => navigation.navigate('Log')}>
+              <Text style={styles.againText}>Log this craving 🌊</Text>
+            </Pressable>
+            <Pressable style={[styles.again, { backgroundColor: 'rgba(255,255,255,0.3)', marginTop: 10 }]} onPress={() => { setCycles(0); setPhase('in'); }}>
               <Text style={styles.againText}>Go again</Text>
             </Pressable>
           </View>

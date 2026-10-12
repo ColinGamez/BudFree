@@ -104,7 +104,29 @@ export async function buyTheme(id: string, price: number): Promise<boolean> {
   return true;
 }
 
-// ---- Daily check-in & streaks ----
+// ---- Craving log ----
+
+export type CravingType = 'flower' | 'vape' | 'edible' | 'preroll' | 'dab' | 'drink';
+
+export type Craving = {
+  ts: number; // epoch ms
+  type: CravingType;
+  intensity: number; // 1-5
+  note: string;
+  beaten: boolean;
+};
+
+export async function getCravings(): Promise<Craving[]> {
+  const raw = await AsyncStorage.getItem(KEYS.cravings);
+  return raw ? (JSON.parse(raw) as Craving[]) : [];
+}
+
+export async function logCraving(c: Omit<Craving, 'ts'>): Promise<Craving[]> {
+  const list = await getCravings();
+  list.unshift({ ...c, ts: Date.now() });
+  await AsyncStorage.setItem(KEYS.cravings, JSON.stringify(list.slice(0, 200)));
+  return list;
+}
 
 function dayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
