@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 import { getProfile } from '../storage';
+import { useAppTheme } from '../ThemeContext';
 
 type Achievement = {
   id: string;
@@ -14,6 +15,7 @@ type Achievement = {
 
 export default function AchievementsScreen() {
   const [days, setDays] = useState(0);
+  const { themeDef } = useAppTheme();
 
   useEffect(() => {
     getProfile().then((p) => {
@@ -35,7 +37,7 @@ export default function AchievementsScreen() {
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   return (
-    <LinearGradient colors={[theme.gradientTop, theme.gradientMid, theme.gradientBottom]} style={styles.bg}>
+    <LinearGradient colors={themeDef.gradient} style={styles.bg}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>🏅 Achievements</Text>
         <Text style={styles.sub}>{unlockedCount} / {achievements.length} unlocked</Text>

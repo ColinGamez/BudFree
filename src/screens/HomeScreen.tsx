@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
 import { getProfile, getXP, getCoins, levelForXP, titleForLevel, Profile } from '../storage';
+import { useAppTheme } from '../ThemeContext';
 
 function pad(n: number) {
   return n.toString().padStart(2, '0');
@@ -13,14 +15,20 @@ export default function HomeScreen() {
   const [now, setNow] = useState(Date.now());
   const [xp, setXP] = useState(0);
   const [coins, setCoins] = useState(0);
+  const { themeDef } = useAppTheme();
 
   useEffect(() => {
-    getProfile().then(setProfile);
-    getXP().then(setXP);
-    getCoins().then(setCoins);
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getProfile().then(setProfile);
+      getXP().then(setXP);
+      getCoins().then(setCoins);
+    }, [])
+  );
 
   if (!profile) return null;
 
@@ -33,7 +41,7 @@ export default function HomeScreen() {
   const { level, intoLevel, needed } = levelForXP(xp);
 
   return (
-    <LinearGradient colors={[theme.gradientTop, theme.gradientMid, theme.gradientBottom]} style={styles.bg}>
+    <LinearGradient colors={themeDef.gradient} style={styles.bg}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.bubble}>🫧</Text>
         <Text style={styles.heading}>Weed-free for</Text>

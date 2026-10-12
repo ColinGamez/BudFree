@@ -10,6 +10,8 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
 import PanicScreen from './src/screens/PanicScreen';
+import ShopScreen from './src/screens/ShopScreen';
+import { ThemeProvider } from './src/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -54,37 +56,44 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={navTheme}>
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: {
-              backgroundColor: 'rgba(255,255,255,0.85)',
-              borderTopWidth: 0,
-              height: 64,
-              paddingBottom: 8,
-            },
-            tabBarActiveTintColor: theme.deepGreen,
-            tabBarInactiveTintColor: '#7a9aa8',
-          }}
-        >
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} /> }}
-          />
-          <Tab.Screen
-            name="Panic"
-            component={PanicScreen}
-            options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🆘" focused={focused} /> }}
-          />
-          <Tab.Screen
-            name="Badges"
-            component={AchievementsScreen}
-            options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏅" focused={focused} /> }}
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
+      <ThemeProvider>
+        <NavigationContainer theme={navTheme}>
+          <Tab.Navigator
+            screenOptions={{
+              headerShown: false,
+              tabBarStyle: {
+                backgroundColor: 'rgba(255,255,255,0.85)',
+                borderTopWidth: 0,
+                height: 64,
+                paddingBottom: 8,
+              },
+              tabBarActiveTintColor: theme.deepGreen,
+              tabBarInactiveTintColor: '#7a9aa8',
+            }}
+          >
+            <Tab.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} /> }}
+            />
+            <Tab.Screen
+              name="Panic"
+              component={PanicScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🆘" focused={focused} /> }}
+            />
+            <Tab.Screen
+              name="Badges"
+              component={AchievementsScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏅" focused={focused} /> }}
+            />
+            <Tab.Screen
+              name="Shop"
+              component={ShopScreen}
+              options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🛍️" focused={focused} /> }}
+            />
+          </Tab.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

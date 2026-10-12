@@ -6,6 +6,8 @@ const KEYS = {
   xp: 'budfree.xp',
   coins: 'budfree.coins',
   cravings: 'budfree.cravings',
+  ownedThemes: 'budfree.ownedThemes',
+  equippedTheme: 'budfree.equippedTheme',
 };
 
 export type Profile = {
@@ -69,4 +71,32 @@ export const LEVEL_TITLES = [
 
 export function titleForLevel(level: number): string {
   return LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+}
+
+// ---- Shop ----
+
+export async function getOwnedThemes(): Promise<string[]> {
+  const raw = await AsyncStorage.getItem(KEYS.ownedThemes);
+  return raw ? (JSON.parse(raw) as string[]) : ['aero'];
+}
+
+export async function getEquippedTheme(): Promise<string> {
+  return (await AsyncStorage.getItem(KEYS.equippedTheme)) ?? 'aero';
+}
+
+export async function equipTheme(id: string) {
+  await AsyncStorage.setItem(KEYS.equippedTheme, id);
+}
+
+/** Returns true if purchase succeeded. */
+export async function buyTheme(id: string, price: number): Promise<boolean> {
+  const coins = await getCoins();
+  if (coins < price) return false;
+  const owned = await getOwnedThemes();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    await AsyncStorage.setItem(KEYS.ownedThemes, JSON.stringify(owned));
+  }
+  await addCoins(-price);
+  return true;
 }
